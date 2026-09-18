@@ -1,3 +1,4 @@
+
 # Hybrid RAG Search System
 
 > A document question-answering system that combines **BM25 keyword retrieval**, **semantic vector search using Sentence Transformers + FAISS**, and **Google Gemini** to generate grounded answers from PDF documents.
@@ -26,7 +27,7 @@ The system also displays the source documents and page numbers used to generate 
 
 ---
 
-# 2. Problem Statement
+## 2. Problem Statement
 
 Searching through large collections of academic and educational PDF documents manually can be time-consuming.
 
@@ -45,7 +46,7 @@ Therefore, this project implements a **Hybrid Retrieval system** that combines b
 
 ---
 
-# 3. Objectives
+## 3. Objectives
 
 The main objectives of this project are:
 
@@ -58,12 +59,12 @@ The main objectives of this project are:
 7. Combine BM25 and semantic search into a hybrid retrieval system.
 8. Use an LLM to generate answers from retrieved document context.
 9. Display the source document and page number for each retrieved result.
-10. Evaluate BM25, semantic search, and hybrid retrieval using precision and recall.
+10. Evaluate BM25, semantic search, and hybrid retrieval using Precision and Recall.
 11. Provide a simple web interface using React.
 
 ---
 
-# 4. System Architecture
+## 4. System Architecture
 
 The complete system follows this pipeline:
 
@@ -105,49 +106,58 @@ The complete system follows this pipeline:
                          |
                          v
               Answer + Source Pages
+````
 
+---
 
-              5. How RAG Works in This Project
+## 5. How RAG Works in This Project
 
-RAG stands for Retrieval-Augmented Generation.
+RAG stands for **Retrieval-Augmented Generation**.
 
 Instead of asking the LLM to answer a question only from its internal knowledge, this system first retrieves relevant information from the provided documents.
 
 The process is:
 
+```text
 User Question
       |
       v
-Retrieve relevant document chunks
+Retrieve Relevant Document Chunks
       |
       v
-Build context from retrieved chunks
+Build Context from Retrieved Chunks
       |
       v
-Send context + question to Gemini
+Send Context + Question to Gemini
       |
       v
-Generate grounded answer
+Generate Grounded Answer
+```
 
-This helps the system answer questions based on the uploaded document collection instead of relying only on the LLM's general knowledge.
+This helps the system answer questions based on the provided document collection instead of relying only on the LLM's general knowledge.
 
-6. Dataset / Documents
+---
+
+## 6. Dataset / Documents
 
 The project uses a collection of academic and educational PDF documents.
 
 The documents include:
 
-Academic Registration Guidelines
-Examination Rules
-Attendance Policy
-R26 B.Tech Regulations
-UG Regulations
-B.Ed Curriculum and Instruction
+* Academic Registration Guidelines
+* Examination Rules
+* Attendance Policy
+* R26 B.Tech Regulations
+* UG Regulations
+* B.Ed Curriculum and Instruction
 
 The documents are stored in:
 
+```text
 data/documents/
-Important Note
+```
+
+### Important Note
 
 One of the PDF files is image/scanned based and did not contain extractable text using the current PDF text extraction method.
 
@@ -155,121 +165,170 @@ OCR has not been implemented in this version of the project.
 
 Therefore, that particular document may produce zero text chunks.
 
-7. Text Extraction
+---
 
-PDF text is extracted using PyMuPDF.
+## 7. Text Extraction
+
+PDF text is extracted using **PyMuPDF**.
 
 File:
 
+```text
 backend/pdf_processor.py
+```
 
 The extracted information includes:
 
-Document name
-Page number
-Extracted text
+* Document name
+* Page number
+* Extracted text
 
 The page information is preserved so that the system can later show the source page to the user.
 
 Example metadata:
 
+```json
 {
     "document": "IAR-Attendance-Policy.pdf",
     "page": 2,
     "text": "A minimum of 75% attendance is required..."
 }
-8. Text Chunking
+```
 
-Large documents are divided into smaller pieces called chunks.
+---
+
+## 8. Text Chunking
+
+Large documents are divided into smaller pieces called **chunks**.
 
 File:
 
+```text
 backend/chunker.py
+```
 
 The current configuration is:
 
+```text
 Chunk size: 1000 characters
 Overlap: 200 characters
-Why chunking?
+```
+
+### Why Chunking?
 
 Sending an entire PDF to the LLM is inefficient.
 
 Instead:
 
+```text
 Large PDF
     |
     v
-Small text chunks
+Small Text Chunks
     |
     v
-Retrieve only relevant chunks
+Retrieve Only Relevant Chunks
     |
     v
-Send relevant context to Gemini
+Send Relevant Context to Gemini
+```
 
 The overlap helps preserve information that may occur at the boundary between two chunks.
 
-9. BM25 Keyword Retrieval
+The current document collection produces approximately:
+
+```text
+995 chunks
+```
+
+The chunks are stored in:
+
+```text
+data/chunks/chunks.json
+```
+
+---
+
+## 9. BM25 Keyword Retrieval
 
 File:
 
+```text
 backend/bm25_search.py
+```
 
 BM25 is a ranking algorithm commonly used for keyword-based information retrieval.
 
 It considers factors such as:
 
-Term frequency
-Inverse document frequency
-Document length
+* Term frequency
+* Inverse document frequency
+* Document length
 
 For example, if the user searches:
 
+```text
 What is the minimum attendance requirement?
+```
 
 BM25 gives higher scores to chunks containing important matching words such as:
 
+```text
 minimum
 attendance
 requirement
-BM25 Advantage
+```
+
+### BM25 Advantages
 
 BM25 is useful for queries containing:
 
-Exact keywords
-Names
-Regulations
-Specific terms
-Numbers
-Policy terminology
-BM25 Limitation
+* Exact keywords
+* Names
+* Regulations
+* Specific terms
+* Numbers
+* Policy terminology
+
+### BM25 Limitation
 
 BM25 mainly depends on lexical matching.
 
 For example:
 
+```text
 How much attendance should students maintain?
+```
 
 may not match as strongly with a document containing:
 
+```text
 A minimum of 75% attendance is required.
+```
 
 even though both sentences have similar meanings.
 
-10. Semantic Search
+---
+
+## 10. Semantic Search
 
 File:
 
+```text
 backend/semantic_search.py
+```
 
 The project uses the Sentence Transformers model:
 
+```text
 all-MiniLM-L6-v2
+```
 
-The model converts text into numerical vectors called embeddings.
+The model converts text into numerical vectors called **embeddings**.
 
 Example:
 
+```text
 "What is the minimum attendance requirement?"
                     |
                     v
@@ -277,125 +336,189 @@ Example:
                     |
                     v
         [0.12, -0.34, 0.56, ...]
+```
 
 The same process is applied to document chunks.
 
-The system then compares the query embedding with document embeddings.
+The system then compares the query embedding with document embeddings to find semantically similar content.
 
-11. FAISS Vector Search
+Semantic search is useful when the user uses different words but the meaning is similar to the document content.
+
+---
+
+## 11. FAISS Vector Search
 
 FAISS is used for efficient similarity search over embeddings.
 
 The project uses:
 
+```text
 FAISS IndexFlatIP
+```
 
 The embeddings are normalized before indexing.
 
-Because normalized vectors are used with inner product similarity, the resulting score corresponds to cosine similarity.
+Because normalized vectors are used with inner product similarity, the resulting score corresponds to **cosine similarity**.
 
-Embedding
-    |
-    v
-Normalize
-    |
-    v
+The process is:
+
+```text
+Document Embedding
+       |
+       v
+L2 Normalization
+       |
+       v
 FAISS IndexFlatIP
-    |
-    v
+       |
+       v
 Cosine Similarity Search
-Cosine Similarity
+```
 
-Cosine similarity measures how similar two vectors are in terms of their direction.
+For a user query:
+
+```text
+User Question
+       |
+       v
+Query Embedding
+       |
+       v
+Normalization
+       |
+       v
+FAISS Search
+       |
+       v
+Most Similar Chunks
+```
+
+The FAISS index is stored in:
+
+```text
+data/faiss/index.faiss
+```
+
+---
+
+## 12. Cosine Similarity
+
+Cosine similarity measures how similar two vectors are based on the angle between them.
 
 The value generally ranges from:
 
+```text
 -1 to 1
+```
 
-A higher similarity indicates that the vectors are more similar.
+A higher cosine similarity indicates that two vectors are more similar in direction.
 
-12. Hybrid Retrieval
+In this project, document and query embeddings are normalized before FAISS search. Therefore, the inner product returned by `IndexFlatIP` corresponds to cosine similarity.
+
+---
+
+## 13. Hybrid Retrieval
 
 File:
 
+```text
 backend/hybrid_search.py
+```
 
 The main feature of this project is combining:
 
+```text
 BM25 Keyword Search
         +
 Semantic Vector Search
         |
         v
 Hybrid Retrieval
+```
 
-The system retrieves the top results from both methods.
+The system retrieves candidate results from both methods.
 
 The current implementation uses equal weighting:
 
+```text
 Hybrid Score =
-0.5 × Keyword Score
+0.5 × Normalized BM25 Score
 +
-0.5 × Semantic Score
+0.5 × Normalized Semantic Score
+```
 
 Before combining the scores, they are normalized so that the two retrieval methods can be combined more reasonably.
 
-Why Hybrid Search?
+### Why Hybrid Search?
 
 BM25 is strong at:
 
-Exact keyword matching
-Specific terminology
-Names
-Numbers
-Regulations
+* Exact keyword matching
+* Specific terminology
+* Names
+* Numbers
+* Regulations
+* Policy terms
 
 Semantic search is strong at:
 
-Meaning
-Paraphrased questions
-Conceptually similar text
-Different wording
+* Meaning
+* Paraphrased questions
+* Conceptually similar text
+* Different wording
 
-Hybrid retrieval attempts to use the strengths of both approaches.
+Hybrid retrieval combines these two retrieval approaches.
 
-13. RAG Generation
+---
+
+## 14. RAG Generation
 
 File:
 
+```text
 backend/rag.py
+```
 
 After hybrid retrieval, the top relevant chunks are collected and provided as context to Google Gemini.
 
 The prompt instructs the model to:
 
-Use only the retrieved document context.
-Avoid inventing information.
-State when the information cannot be found.
-Keep different documents separate.
-Mention document differences when conflicting information exists.
-Identify the relevant source document when necessary.
+* Use only the retrieved document context.
+* Avoid inventing information.
+* State when the information cannot be found.
+* Keep different documents separate.
+* Mention document differences when conflicting information exists.
+* Identify the relevant source document when necessary.
 
 For example, if a question cannot be answered from the available documents, the system can return:
 
+```text
 I could not find this information in the provided documents.
+```
 
-This is an important part of preventing hallucinated answers.
+This helps reduce unsupported or hallucinated answers.
 
-14. Google Gemini
+---
+
+## 15. Google Gemini
 
 The project uses:
 
+```text
 Google Gemini
+```
 
 Model:
 
+```text
 gemini-2.5-flash
+```
 
-Gemini is used only after retrieval.
+Gemini is used after the retrieval stage.
 
 The basic flow is:
 
+```text
 Question
    |
    v
@@ -412,18 +535,25 @@ Gemini
    |
    v
 Answer
+```
 
 The Gemini API key is stored in an environment file:
 
+```text
 .env
+```
 
 Example:
 
+```text
 GEMINI_API_KEY=your_api_key_here
+```
 
-The actual API key should never be committed to GitHub.
+The actual API key should **never** be committed to GitHub.
 
-15. Source Attribution
+---
+
+## 16. Source Attribution
 
 The system does not only return an answer.
 
@@ -431,6 +561,7 @@ It also returns the documents and pages used during retrieval.
 
 Example:
 
+```text
 Sources
 
 1. IAR-Attendance-Policy.pdf
@@ -438,28 +569,39 @@ Sources
 
 2. UG_Regulations_(2024-25)_2024-7-17-11-36-22.pdf
    Page 5
+```
 
-This makes the answer easier to verify.
+This makes the generated answer easier to verify against the original documents.
 
-16. Backend
+---
 
-The backend is implemented using FastAPI.
+## 17. Backend
+
+The backend is implemented using **FastAPI**.
 
 Main API file:
 
+```text
 backend/api.py
+```
 
-The backend provides:
+The main endpoint is:
 
+```text
 POST /ask
-Request
+```
+
+### Request
+
+```json
 {
     "question": "What is the minimum attendance requirement?"
 }
-Response
+```
 
-The response contains:
+### Response
 
+```json
 {
     "answer": "Generated answer...",
     "sources": [
@@ -469,82 +611,122 @@ The response contains:
         }
     ]
 }
+```
+
+The backend runs on:
+
+```text
+http://127.0.0.1:8000
+```
+
+FastAPI documentation is available at:
+
+```text
+http://127.0.0.1:8000/docs
+```
 
 The backend also enables CORS so that the React frontend can communicate with the FastAPI server.
 
-17. Frontend
+Temporary Gemini service errors such as rate limits and service unavailability are handled with user-friendly error messages.
+
+---
+
+## 18. Frontend
 
 The frontend is implemented using:
 
-React
-Vite
-React Markdown
-CSS
+* React
+* Vite
+* React Markdown
+* CSS
 
 The frontend provides:
 
-Question input
-Ask Question button
-Clear button
-Loading indicator
-Generated answer
-Source documents
-Source page numbers
-Error handling
-Markdown rendering
+* Question input
+* Ask Question button
+* Clear button
+* Loading indicator
+* Generated answer
+* Source documents
+* Source page numbers
+* Error handling
+* Markdown rendering
 
 Frontend directory:
 
+```text
 frontend/
+```
 
 The frontend communicates with:
 
+```text
 http://127.0.0.1:8000/ask
-18. User Interface Flow
+```
 
-The user enters a question:
+---
 
-What is the minimum attendance requirement?
+## 19. User Interface Flow
 
-Then:
+The complete user interaction is:
 
+```text
+User enters a question
+        |
+        v
 React Frontend
-      |
-      v
+        |
+        v
 FastAPI /ask
-      |
-      v
+        |
+        v
 Hybrid Retrieval
-      |
-      +---- BM25
-      |
-      +---- Semantic Search + FAISS
-      |
-      v
+        |
+        +------ BM25 Keyword Search
+        |
+        +------ Semantic Search + FAISS
+        |
+        v
 Top Relevant Chunks
-      |
-      v
+        |
+        v
 Gemini
-      |
-      v
+        |
+        v
 Answer + Sources
-      |
-      v
+        |
+        v
 React UI
-19. Project Structure
+```
+
+The application also supports:
+
+```text
+Ctrl + Enter
+```
+
+for submitting the question.
+
+---
+
+## 20. Project Structure
+
+```text
 hybrid-rag-search/
 │
 ├── .env
+├── .gitignore
+├── README.md
 ├── requirements.txt
 │
 ├── data/
 │   ├── documents/
-│   │   ├── Academic Registration PDF
-│   │   ├── Examination Rules PDF
-│   │   ├── Attendance Policy PDF
-│   │   ├── R26 Regulations PDF
-│   │   ├── UG Regulations PDF
-│   │   └── B.Ed Curriculum PDF
+│   │   ├── Detailed Guidelines - Academic Registration
+│   │   ├── Examination_Rules_for_Students.pdf
+│   │   ├── IAR-Attendance-Policy.pdf
+│   │   ├── R26_Regulations_B.Tech.pdf
+│   │   ├── UG_Regulations_(2024-25)_2024-7-17-11-36-22.pdf
+│   │   └── __UG_B.Ed._Education_70122-Curriculum and Instruction_1747.pdf
 │   │
 │   ├── chunks/
 │   │   └── chunks.json
@@ -573,296 +755,690 @@ hybrid-rag-search/
 └── evaluation/
     ├── evaluation.py
     └── inspect_chunks.py
-20. Technologies Used
-Technology	Purpose
-Python	Backend and RAG implementation
-PyMuPDF	PDF text extraction
-NumPy	Numerical operations
-Sentence Transformers	Text embeddings
-all-MiniLM-L6-v2	Embedding model
-FAISS	Vector similarity search
-rank-bm25	BM25 keyword retrieval
-FastAPI	Backend REST API
-Uvicorn	FastAPI server
-Google Gemini	Answer generation
-python-dotenv	Environment variable management
-React	Frontend
-Vite	Frontend development/build tool
-React Markdown	Markdown answer rendering
-CSS	User interface styling
-21. Installation
-Prerequisites
+```
+
+---
+
+## 21. Technologies Used
+
+| Technology            | Purpose                             |
+| --------------------- | ----------------------------------- |
+| Python                | Backend and RAG implementation      |
+| PyMuPDF               | PDF text extraction                 |
+| NumPy                 | Numerical operations                |
+| Sentence Transformers | Text embeddings                     |
+| all-MiniLM-L6-v2      | Embedding model                     |
+| FAISS                 | Vector similarity search            |
+| rank-bm25             | BM25 keyword retrieval              |
+| FastAPI               | Backend REST API                    |
+| Uvicorn               | FastAPI server                      |
+| Google Gemini         | Answer generation                   |
+| python-dotenv         | Environment variable management     |
+| React                 | Frontend                            |
+| Vite                  | Frontend development and build tool |
+| React Markdown        | Markdown answer rendering           |
+| CSS                   | User interface styling              |
+
+---
+
+## 22. Installation
+
+### Prerequisites
 
 Install the following:
 
-Python 3.12
-Node.js
-npm
-Git
-Step 1: Clone the Repository
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+* Python 3.12
+* Node.js
+* npm
+* Git
 
-Then:
+### Step 1: Clone the Repository
 
-cd hybrid-rag-search
-22. Python Virtual Environment
+```bash
+git clone https://github.com/jyothirmai-chapala/Hybrid-RAG-Search-System.git
+cd Hybrid-RAG-Search-System
+```
 
-Create a virtual environment:
+### Step 2: Create a Python Virtual Environment
 
+```bash
 python -m venv .venv
+```
 
 Activate it on Windows PowerShell:
 
+```powershell
 .venv\Scripts\Activate.ps1
+```
 
-The terminal should show:
+After activation, the terminal should show:
 
+```text
 (.venv)
-23. Install Python Dependencies
+```
 
-Run:
+### Step 3: Install Python Dependencies
 
+```bash
 pip install -r requirements.txt
-24. Configure Gemini API Key
+```
+
+---
+
+## 23. Configure Gemini API Key
 
 Create a file named:
 
+```text
 .env
+```
 
 in the project root.
 
 Add:
 
+```text
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+```
 
 Replace the placeholder with your actual Gemini API key.
 
-Security
+### Security
 
-Do not upload .env to GitHub.
+Do not upload `.env` to GitHub.
 
-The .gitignore file should contain:
+The `.gitignore` file should contain:
 
+```text
 .env
 .venv/
 __pycache__/
 *.pyc
 frontend/node_modules/
 frontend/dist/
-25. Prepare the Documents
+```
 
-Place PDF files inside:
+---
 
+## 24. Prepare the Documents
+
+Place the PDF files inside:
+
+```text
 data/documents/
+```
 
 Run the PDF extraction script:
 
+```bash
 python backend/pdf_processor.py
+```
 
-Then create chunks:
+Then create the chunks:
 
+```bash
 python backend/chunker.py
+```
 
 This creates:
 
+```text
 data/chunks/chunks.json
-26. Create the FAISS Index
+```
 
-Run:
+The current document collection produces approximately:
 
-python backend/semantic_search.py
-
-This generates:
-
-data/faiss/index.faiss
-
-The current project contains approximately:
-
-995 text chunks
+```text
+995 chunks
+```
 
 from the available extractable PDF content.
 
-27. Test BM25 Search
+---
+
+## 25. Create the FAISS Index
 
 Run:
 
+```bash
+python backend/semantic_search.py
+```
+
+This generates:
+
+```text
+data/faiss/index.faiss
+```
+
+The FAISS index contains the embeddings of the document chunks and is used for semantic similarity search.
+
+---
+
+## 26. Test BM25 Search
+
+Run:
+
+```bash
 python backend/bm25_search.py
+```
 
 Enter a question such as:
 
+```text
 What is the minimum attendance requirement?
+```
 
-The program displays the top BM25 results and their scores.
+The program displays the top BM25 results and their relevance scores.
 
-28. Test Hybrid Search
+---
+
+## 27. Test Semantic Search
+
+The semantic search implementation is contained in:
+
+```text
+backend/semantic_search.py
+```
+
+It uses:
+
+```text
+all-MiniLM-L6-v2
+```
+
+to generate embeddings and FAISS to retrieve semantically similar chunks.
+
+---
+
+## 28. Test Hybrid Search
 
 Run:
 
+```bash
 python backend/hybrid_search.py
+```
 
 Enter:
 
+```text
 What is the minimum attendance requirement?
+```
 
 The program combines:
 
+```text
 BM25 Score
 +
 Semantic Similarity
+```
 
 and displays the top hybrid results.
 
-29. Test RAG
+---
+
+## 29. Test RAG
 
 Run:
 
+```bash
 python backend/rag.py
+```
 
 Enter a question.
 
 The system will:
 
-Retrieve relevant chunks.
-Combine BM25 and semantic results.
-Build the context.
-Send the context to Gemini.
-Generate an answer.
-Display source documents and pages.
-30. Start the FastAPI Backend
+1. Retrieve relevant chunks.
+2. Combine BM25 and semantic results.
+3. Build the context.
+4. Send the context to Gemini.
+5. Generate an answer.
+6. Display source documents and pages.
 
-From the project root:
+---
 
+## 30. Start the FastAPI Backend
+
+From the project root, run:
+
+```bash
 uvicorn backend.api:app --reload
+```
 
 The backend runs at:
 
+```text
 http://127.0.0.1:8000
+```
 
-FastAPI documentation is available at:
+FastAPI documentation:
 
+```text
 http://127.0.0.1:8000/docs
-31. Start the React Frontend
+```
+
+---
+
+## 31. Start the React Frontend
 
 Open another terminal.
 
 Go to the frontend directory:
 
+```bash
 cd frontend
+```
 
 Install frontend dependencies:
 
+```bash
 npm install
+```
 
 Start the development server:
 
+```bash
 npm run dev
+```
 
 Vite will provide a local URL, usually similar to:
 
+```text
 http://localhost:5173
+```
 
-Open that URL in a browser.
+Open the displayed URL in a browser.
 
-32. Example Questions
+---
+
+## 32. Example Questions
 
 The following questions can be used to test the system.
 
-Exact Keyword Query
+### Attendance Query
+
+```text
 What is the minimum attendance required for each module?
+```
 
-This tests keyword retrieval.
+### Semantic / Paraphrased Query
 
-Semantic / Paraphrased Query
+```text
 How much class attendance does a student need to maintain?
+```
 
-This tests whether semantic retrieval can handle different wording.
+### Attendance Policy Query
 
-Policy Query
+```text
 What action is taken when a student has insufficient attendance?
+```
 
-This tests retrieval of policy-related information.
+### Examination Query
 
-Examination Query
+```text
 What rules should students follow during examinations?
+```
 
-This tests retrieval from the examination rules document.
+### B.Tech Query
 
-B.Tech Query
+```text
 What does the B.Tech regulation document say about attendance?
+```
 
-This tests retrieval from the B.Tech regulations.
+### B.Ed Query
 
-B.Ed Query
+```text
 What is covered under curriculum and instruction in the B.Ed program?
+```
 
-This tests semantic retrieval over the large B.Ed document.
+### Unanswerable Query
 
-Unanswerable Query
+```text
 What is the hostel mess fee for students?
+```
 
-The documents do not contain this information.
+The provided documents do not contain this information.
 
 The expected behavior is:
 
+```text
 I could not find this information in the provided documents.
+```
 
-This demonstrates that the system does not intentionally invent information when the required information is unavailable in the retrieved context.
+This demonstrates that the system does not intentionally invent information when the required information is unavailable in the provided documents.
 
-33. Evaluation
+---
+
+## 33. Evaluation
 
 The project evaluates three retrieval approaches:
 
-BM25
-Semantic Search
-Hybrid Search
+1. BM25
+2. Semantic Search
+3. Hybrid Search
 
-The evaluation uses a small manually created set of five questions.
+The evaluation uses:
 
-Relevance is determined using the relevant document + page.
+* Precision
+* Recall
+* Page-level relevance
 
-The evaluation calculates:
+The evaluation contains five manually selected questions based on the available documents.
 
-Precision = Relevant Retrieved Results / Total Retrieved Results
+The questions cover:
 
-and
+* Minimum attendance requirement
+* Attendance shortage
+* Examination rules
+* B.Tech regulations
+* B.Ed curriculum and instruction
 
-Recall = Relevant Retrieved Results / Total Relevant Results
-34. Evaluation Results
+---
 
-The current evaluation produced the following results:
+## 34. Evaluation Method
 
-Query	Method	Precision	Recall
-Minimum attendance	BM25	0.60	0.38
-Minimum attendance	Semantic	0.60	0.38
-Minimum attendance	Hybrid	0.80	0.50
-Shortage of attendance	BM25	0.20	0.33
-Shortage of attendance	Semantic	0.20	0.33
-Shortage of attendance	Hybrid	0.20	0.33
-Examination rules	BM25	0.20	0.17
-Examination rules	Semantic	0.20	0.17
-Examination rules	Hybrid	0.20	0.17
-B.Tech regulations	BM25	0.00	0.00
-B.Tech regulations	Semantic	0.00	0.00
-B.Tech regulations	Hybrid	0.00	0.00
-B.Ed curriculum	BM25	0.00	0.00
-B.Ed curriculum	Semantic	0.20	0.33
-B.Ed curriculum	Hybrid	0.00	0.00
-Average Results
-Method	Average Precision	Average Recall
-BM25	0.20	0.17
-Semantic Search	0.24	0.24
-Hybrid Search	0.24	0.20
-35. Interpretation of Evaluation
+For every test question:
 
-The evaluation shows that the retrieval performance varies depending on the type of query.
+1. BM25 retrieves the top results.
+2. Semantic search retrieves the top results.
+3. Hybrid search retrieves the top results.
+4. Retrieved pages are compared with manually identified relevant pages.
+5. Precision and Recall are calculated.
 
-For the minimum attendance query, hybrid retrieval achieved:
+### Precision
 
+Precision measures how many of the retrieved results are relevant.
+
+```text
+Precision =
+Relevant Retrieved Results
+--------------------------
+Total Retrieved Results
+```
+
+### Recall
+
+Recall measures how many of the relevant results were retrieved.
+
+```text
+Recall =
+Relevant Retrieved Results
+--------------------------
+Total Relevant Results
+```
+
+---
+
+## 35. Evaluation Results
+
+### Query-Level Results
+
+| Query                  | Method   | Precision | Recall |
+| ---------------------- | -------- | --------: | -----: |
+| Minimum attendance     | BM25     |      0.60 |   0.38 |
+| Minimum attendance     | Semantic |      0.60 |   0.38 |
+| Minimum attendance     | Hybrid   |      0.80 |   0.50 |
+| Shortage of attendance | BM25     |      0.20 |   0.33 |
+| Shortage of attendance | Semantic |      0.20 |   0.33 |
+| Shortage of attendance | Hybrid   |      0.20 |   0.33 |
+| Examination rules      | BM25     |      0.20 |   0.17 |
+| Examination rules      | Semantic |      0.20 |   0.17 |
+| Examination rules      | Hybrid   |      0.20 |   0.17 |
+| B.Tech regulations     | BM25     |      0.00 |   0.00 |
+| B.Tech regulations     | Semantic |      0.00 |   0.00 |
+| B.Tech regulations     | Hybrid   |      0.00 |   0.00 |
+| B.Ed curriculum        | BM25     |      0.00 |   0.00 |
+| B.Ed curriculum        | Semantic |      0.20 |   0.33 |
+| B.Ed curriculum        | Hybrid   |      0.00 |   0.00 |
+
+### Average Results
+
+| Method          | Average Precision | Average Recall |
+| --------------- | ----------------: | -------------: |
+| BM25            |              0.20 |           0.17 |
+| Semantic Search |              0.24 |           0.24 |
+| Hybrid Search   |              0.24 |           0.20 |
+
+---
+
+## 36. Interpretation of Evaluation
+
+The evaluation shows that retrieval performance varies depending on the type of query.
+
+For the **minimum attendance** query, hybrid retrieval achieved:
+
+```text
 Precision = 0.80
 Recall = 0.50
+```
 
-which was higher than the corresponding BM25 and semantic results for that query.
+while BM25 and semantic retrieval achieved:
+
+```text
+Precision = 0.60
+Recall = 0.38
+```
+
+for that query.
 
 However, the overall five-question average does not show hybrid retrieval outperforming semantic search on every metric.
 
+The average results were:
+
+```text
+BM25:
+Precision = 0.20
+Recall = 0.17
+
+Semantic Search:
+Precision = 0.24
+Recall = 0.24
+
+Hybrid Search:
+Precision = 0.24
+Recall = 0.20
+```
+
 Therefore, the results should be interpreted as an experiment on this particular document collection and question set rather than as a general claim that hybrid retrieval is always better.
+
+The evaluation demonstrates that different retrieval methods behave differently depending on the query and document content.
+
+---
+
+## 37. Limitations
+
+The current version of the project has the following limitations:
+
+1. One scanned PDF does not currently provide extractable text.
+2. OCR is not implemented.
+3. The evaluation contains only five questions.
+4. Relevance labels are manually created.
+5. The evaluation uses page-level relevance.
+6. Hybrid weights are fixed at 0.5 and 0.5.
+7. The system retrieves a fixed number of top results.
+8. No dedicated reranking model is currently used.
+9. Very broad questions may retrieve less relevant chunks.
+10. Gemini availability and API rate limits can temporarily affect answer generation.
+
+---
+
+## 38. Future Enhancements
+
+The system can be improved in the future by adding:
+
+### OCR Support
+
+OCR can be added to process scanned PDFs.
+
+```text
+Scanned PDF
+     |
+     v
+    OCR
+     |
+     v
+Extracted Text
+     |
+     v
+Chunking
+```
+
+### Better Chunking
+
+The current system uses character-based chunking.
+
+Future versions can use:
+
+* Sentence-based chunking
+* Paragraph-based chunking
+* Section-aware chunking
+
+### Improved Hybrid Retrieval
+
+Different BM25 and semantic weights can be tested to determine how retrieval performance changes.
+
+For example:
+
+```text
+BM25 = 0.3
+Semantic = 0.7
+```
+
+or:
+
+```text
+BM25 = 0.7
+Semantic = 0.3
+```
+
+### Larger Evaluation Dataset
+
+More questions and manually verified relevance labels can be added to make the evaluation more reliable.
+
+### Reranking
+
+A reranking model can be added after initial retrieval to improve the ordering of retrieved chunks.
+
+### Document Upload
+
+A future version can allow users to upload their own documents directly through the web interface.
+
+### Additional Document Formats
+
+The system can be extended to support:
+
+* DOCX
+* TXT
+* HTML
+* Markdown
+
+### Conversation History
+
+The application can support multi-turn conversations and follow-up questions.
+
+### Evaluation Dashboard
+
+A dashboard can be added to visualize:
+
+* Precision
+* Recall
+* Retrieval scores
+* Query-level results
+
+---
+
+## 39. Security
+
+The Gemini API key is stored in the `.env` file.
+
+Example:
+
+```text
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+```
+
+The actual API key should never be written directly inside the Python source code.
+
+The `.env` file should be included in `.gitignore`:
+
+```text
+.env
+```
+
+Before pushing the project to GitHub, verify that `.env` is not being tracked by Git.
+
+---
+
+## 40. Conclusion
+
+The **Hybrid RAG Search System** is an end-to-end document question-answering application that combines traditional information retrieval, semantic vector search, hybrid retrieval, and generative AI.
+
+The complete workflow is:
+
+```text
+PDF Documents
+      |
+      v
+Text Extraction
+      |
+      v
+Text Chunking
+      |
+      +-------------------+
+      |                   |
+      v                   v
+    BM25             Embeddings
+      |                   |
+      v                   v
+Keyword Search          FAISS
+      |            Semantic Search
+      |                   |
+      +---------+---------+
+                |
+                v
+        Hybrid Retrieval
+                |
+                v
+       Relevant Chunks
+                |
+                v
+             Gemini
+                |
+                v
+        Grounded Answer
+                |
+                v
+         Answer + Sources
+```
+
+The key idea of the project is to combine **exact keyword matching** with **semantic understanding**.
+
+BM25 helps retrieve information containing important exact terms, while semantic search helps retrieve information with similar meaning even when different words are used.
+
+The retrieved information is then passed to Google Gemini to generate a natural-language answer based on the available document context.
+
+The project demonstrates the practical implementation of:
+
+* Retrieval-Augmented Generation (RAG)
+* BM25
+* Text Embeddings
+* Semantic Search
+* Cosine Similarity
+* FAISS
+* Hybrid Retrieval
+* Large Language Models
+* Grounded Answer Generation
+* FastAPI
+* React
+* Google Gemini
+
+---
+
+## 41. Repository
+
+GitHub Repository:
+
+[https://github.com/jyothirmai-chapala/Hybrid-RAG-Search-System](https://github.com/jyothirmai-chapala/Hybrid-RAG-Search-System)
+
+```
+```
